@@ -1,6 +1,6 @@
 const express = require('express');
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode');
+const qrcode = require('qrcode-terminal'); // Já está instalado
 const cors = require('cors');
 
 const app = express();
@@ -57,6 +57,7 @@ async function testSupabaseConnection() {
 // ================= CONFIGURAÇÃO WHATSAPP =================
 let whatsappClient = null;
 let isConnected = false;
+let currentQrCode = '';
 
 function initializeWhatsApp() {
   console.log('🔄 Iniciando cliente WhatsApp...');
@@ -80,18 +81,20 @@ function initializeWhatsApp() {
     }
   });
 
-  // QR Code
+  // QR Code - usando qrcode-terminal
   whatsappClient.on('qr', async (qr) => {
     console.log('📱 QR Code recebido!');
+    console.log('🔒 Escaneie o QR Code abaixo com seu WhatsApp:');
+    qrcode.generate(qr, { small: true });
+    
+    currentQrCode = qr;
+    
     try {
-      const qrImage = await qrcode.toDataURL(qr);
-      
       await supabase
         .from('whatsapp_sessions')
         .upsert({
           id: 1,
           qr_code: qr,
-          qr_image: qrImage,
           status: 'waiting_qr',
           updated_at: new Date().toISOString()
         });
@@ -106,6 +109,7 @@ function initializeWhatsApp() {
   whatsappClient.on('ready', async () => {
     console.log('✅ WHATSAPP CONECTADO NA NUVEM!');
     isConnected = true;
+    currentQrCode = '';
     
     try {
       await supabase
@@ -195,8 +199,8 @@ app.get('/api/status', async (req, res) => {
     res.json({
       connected: isConnected,
       status: data?.status || 'disconnected',
-      qr_code: data?.qr_code,
-      qr_image: data?.qr_image,
+      qr_code: currentQrCode || data?.qr_code,
+      has_qr: !!(currentQrCode || data?.qr_code),
       updated_at: data?.updated_at,
       server: 'railway',
       environment_ok: !!(supabaseUrl && supabaseKey)
@@ -232,16 +236,6 @@ app.post('/api/send-message', async (req, res) => {
     const formattedPhone = phone.replace(/\D/g, '') + '@c.us';
     await whatsappClient.sendMessage(formattedPhone, message);
 
-    // Registrar no Supabase
-    await supabase
-      .from('message_logs')
-      .insert({
-        phone: phone,
-        message: message,
-        status: 'sent',
-        sent_at: new Date().toISOString()
-      });
-
     res.json({ 
       success: true, 
       message: 'Mensagem enviada da nuvem! 🌩️',
@@ -250,17 +244,6 @@ app.post('/api/send-message', async (req, res) => {
   } catch (error) {
     console.error('❌ Erro ao enviar mensagem:', error);
     
-    // Registrar erro no Supabase
-    await supabase
-      .from('message_logs')
-      .insert({
-        phone: req.body.phone,
-        message: req.body.message,
-        status: 'failed',
-        error: error.message,
-        sent_at: new Date().toISOString()
-      });
-
     res.status(500).json({ 
       error: 'Erro ao enviar mensagem', 
       details: error.message 
