@@ -15,7 +15,9 @@
     "@supabase/supabase-js": "^2.38.0",
     "express": "^4.18.2",
     "whatsapp-web.js": "^1.23.0",
-    "qrcode-terminal": "^0.12.0"
+    "qrcode-terminal": "^0.12.0",
+    "qrcode": "^1.5.3",
+    "cors": "^2.8.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
@@ -25,6 +27,6 @@
     "supabase",
     "server"
   ],
-  "author": "Edivan Almeida",
-  "license": "TESTE"
+  "author": "Your Name",
+  "license": "MIT"
 }
