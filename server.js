@@ -6,7 +6,27 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ================= VERIFICAÇÃO DE AMBIENTE =================
+// ================= CONFIGURAÇÃO PUPPETEER PARA RAILWAY =================
+console.log('🔧 Configurando Puppeteer para Railway...');
+
+const puppeteerOptions = {
+  headless: true,
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-accelerated-2d-canvas',
+    '--no-first-run',
+    '--no-zygote',
+    '--disable-gpu',
+    '--single-process',
+    '--disable-web-security',
+    '--disable-features=VizDisplayCompositor'
+  ],
+  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null
+};
+
+// ================= CONFIGURAÇÃO SUPABASE =================
 console.log('🔍 Verificando variáveis de ambiente...');
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -15,12 +35,15 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY;
 let supabase = null;
 let supabaseConnected = false;
 
-// Configuração do Supabase (com fallback)
 if (supabaseUrl && supabaseKey) {
-  const { createClient } = require('@supabase/supabase-js');
-  supabase = createClient(supabaseUrl, supabaseKey);
-  supabaseConnected = true;
-  console.log('✅ Supabase configurado com sucesso');
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    supabase = createClient(supabaseUrl, supabaseKey);
+    supabaseConnected = true;
+    console.log('✅ Supabase configurado com sucesso');
+  } catch (error) {
+    console.error('❌ Erro ao configurar Supabase:', error.message);
+  }
 } else {
   console.warn('⚠️  Supabase não configurado - funcionando em modo offline');
   console.warn('💡 Configure SUPABASE_URL e SUPABASE_ANON_KEY no Railway');
@@ -31,96 +54,93 @@ let whatsappClient = null;
 let isConnected = false;
 let currentQrCode = '';
 
-function initializeWhatsApp() {
+async function initializeWhatsApp() {
   console.log('🔄 Iniciando cliente WhatsApp...');
   
-  whatsappClient = new Client({
-    authStrategy: new LocalAuth({
-      clientId: "whatsapp-railway"
-    }),
-    puppeteer: {
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu'
-      ]
-    }
-  });
-
-  // QR Code
-  whatsappClient.on('qr', async (qr) => {
-    console.log('📱 QR Code recebido!');
-    console.log('🔒 Escaneie o QR Code abaixo com seu WhatsApp:');
-    qrcode.generate(qr, { small: true });
-    
-    currentQrCode = qr;
-    
-    // Salvar no Supabase se disponível
-    if (supabaseConnected) {
-      try {
-        await supabase
-          .from('whatsapp_sessions')
-          .upsert({
-            id: 1,
-            qr_code: qr,
-            status: 'waiting_qr',
-            updated_at: new Date().toISOString()
-          });
-        console.log('✅ QR Code salvo no Supabase');
-      } catch (error) {
-        console.error('❌ Erro ao salvar QR no Supabase:', error.message);
+  try {
+    whatsappClient = new Client({
+      authStrategy: new LocalAuth({
+        clientId: "whatsapp-railway"
+      }),
+      puppeteer: puppeteerOptions,
+      webVersionCache: {
+        type: "remote",
+        remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html"
       }
-    }
-  });
+    });
 
-  // Conectado
-  whatsappClient.on('ready', async () => {
-    console.log('✅ WHATSAPP CONECTADO NA NUVEM!');
-    isConnected = true;
-    currentQrCode = '';
-    
-    // Atualizar status no Supabase se disponível
-    if (supabaseConnected) {
-      try {
-        await supabase
-          .from('whatsapp_sessions')
-          .upsert({
-            id: 1,
-            status: 'connected',
-            connected_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-        console.log('✅ Status atualizado no Supabase');
-      } catch (error) {
-        console.error('❌ Erro ao atualizar status no Supabase:', error.message);
+    // QR Code
+    whatsappClient.on('qr', async (qr) => {
+      console.log('📱 QR Code recebido!');
+      console.log('🔒 Escaneie o QR Code abaixo com seu WhatsApp:');
+      qrcode.generate(qr, { small: true });
+      
+      currentQrCode = qr;
+      
+      if (supabaseConnected) {
+        try {
+          await supabase
+            .from('whatsapp_sessions')
+            .upsert({
+              id: 1,
+              qr_code: qr,
+              status: 'waiting_qr',
+              updated_at: new Date().toISOString()
+            });
+          console.log('✅ QR Code salvo no Supabase');
+        } catch (error) {
+          console.error('❌ Erro ao salvar QR no Supabase:', error.message);
+        }
       }
-    }
-  });
+    });
 
-  // Erros
-  whatsappClient.on('auth_failure', (msg) => {
-    console.log('❌ Falha na autenticação:', msg);
-    isConnected = false;
-  });
+    // Conectado
+    whatsappClient.on('ready', async () => {
+      console.log('✅ WHATSAPP CONECTADO NA NUVEM!');
+      isConnected = true;
+      currentQrCode = '';
+      
+      if (supabaseConnected) {
+        try {
+          await supabase
+            .from('whatsapp_sessions')
+            .upsert({
+              id: 1,
+              status: 'connected',
+              connected_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          console.log('✅ Status atualizado no Supabase');
+        } catch (error) {
+          console.error('❌ Erro ao atualizar status no Supabase:', error.message);
+        }
+      }
+    });
 
-  whatsappClient.on('disconnected', (reason) => {
-    console.log('❌ Desconectado:', reason);
-    isConnected = false;
+    // Erros
+    whatsappClient.on('auth_failure', (msg) => {
+      console.log('❌ Falha na autenticação:', msg);
+      isConnected = false;
+    });
+
+    whatsappClient.on('disconnected', (reason) => {
+      console.log('❌ Desconectado:', reason);
+      isConnected = false;
+      
+      setTimeout(() => {
+        console.log('🔄 Tentando reconectar...');
+        initializeWhatsApp();
+      }, 5000);
+    });
+
+    await whatsappClient.initialize();
+    console.log('✅ Cliente WhatsApp inicializado com sucesso');
     
-    // Tentar reconectar após 5 segundos
-    setTimeout(() => {
-      console.log('🔄 Tentando reconectar...');
-      initializeWhatsApp();
-    }, 5000);
-  });
-
-  whatsappClient.initialize();
+  } catch (error) {
+    console.error('❌ Erro ao inicializar WhatsApp:', error.message);
+    console.log('🔄 Tentando novamente em 10 segundos...');
+    setTimeout(initializeWhatsApp, 10000);
+  }
 }
 
 // ================= MIDDLEWARES =================
@@ -138,7 +158,8 @@ app.get('/health', (req, res) => {
     supabase_connected: supabaseConnected,
     timestamp: new Date().toISOString(),
     server: 'Railway Cloud',
-    node_version: process.version
+    node_version: process.version,
+    has_qr: !!currentQrCode
   });
 });
 
@@ -187,7 +208,8 @@ app.post('/api/send-message', async (req, res) => {
 
     if (!isConnected) {
       return res.status(400).json({ 
-        error: 'WhatsApp não está conectado' 
+        error: 'WhatsApp não está conectado',
+        qr_code: currentQrCode 
       });
     }
 
@@ -207,6 +229,15 @@ app.post('/api/send-message', async (req, res) => {
   }
 });
 
+// Rota para forçar reinicialização
+app.post('/api/restart', (req, res) => {
+  if (whatsappClient) {
+    whatsappClient.destroy();
+  }
+  initializeWhatsApp();
+  res.json({ success: true, message: 'Reiniciando WhatsApp...' });
+});
+
 // Rota raiz
 app.get('/', (req, res) => {
   res.json({
@@ -219,12 +250,13 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       status: '/api/status',
-      send_message: 'POST /api/send-message'
+      send_message: 'POST /api/send-message',
+      restart: 'POST /api/restart'
     }
   });
 });
 
-// Iniciar servidor
+// ================= INICIALIZAÇÃO =================
 app.listen(PORT, '0.0.0.0', () => {
   console.log('=====================================');
   console.log('🚀 SERVIDOR WHATSAPP NA NUVEM!');
@@ -234,6 +266,15 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('💾 Supabase:', supabaseConnected ? '✅ Conectado' : '❌ Não configurado');
   console.log('=====================================');
   
-  // Iniciar WhatsApp
-  initializeWhatsApp();
+  // Iniciar WhatsApp após um pequeno delay
+  setTimeout(initializeWhatsApp, 2000);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('🛑 Desligando servidor...');
+  if (whatsappClient) {
+    whatsappClient.destroy();
+  }
+  process.exit(0);
 });
