@@ -1,0 +1,18 @@
+
+[phases.setup]
+nixPkgs = [
+    "nodejs_22",
+    "npm-9_x"
+]
+
+[phases.install]
+cmds = ["npm install --legacy-peer-deps"]
+
+[phases.build]
+cmds = ["npm run build"]  # Se você tiver um script build
+
+[start]
+cmd = "npm start"
+
+[build.args]
+NODE_VERSION = "22"
