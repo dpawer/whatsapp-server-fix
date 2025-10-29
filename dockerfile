@@ -54,7 +54,7 @@ ENV NIXPACKS_PATH=/app/node_modules/.bin:$NIXPACKS_PATH
 COPY . /app/
 
 # Instale dependências npm com legacy-peer-deps para resolver conflitos
-RUN --mount=type=cache,id=npm-cache,target=/root/.npm \
+RUN --mount=type=cache,id=s/00160558-6ed1-4560-acd3-4625e1881506-/root/npm,target=/root/.npm \
     npm i --legacy-peer-deps
 
 # Fase de build (se aplicável)
