@@ -1,41 +1,29 @@
 [phases.setup]
-nixPkgs = [
-    "nodejs_22",
-    "chromium", 
-    "nss",
-    "atk",
-    "at-spi2-core",  # CORREÇÃO: em vez de at-spi2-atk
-    "cups",
-    "libdrm",
-    "mesa",
-    "alsa-lib",
-    "pango",
-    "gtk3",
-    "libglvnd",
-    "xorg.libXScrnSaver"  # CORREÇÃO: nome correto
-]
+nixPkgs = ["nodejs_22"]  # APENAS Node.js via Nix
 
 [phases.setup.apt]
 pkgs = [
+    "chromium-browser",
     "libnss3",
-    "libatk1.0-0",
+    "libatk1.0-0", 
     "libatk-bridge2.0-0",
-    "libcups2", 
+    "libcups2",
     "libgbm1",
     "libasound2t64",
-    "libpangocairo-1.0-0",
+    "libpangocairo-1.0-0", 
     "libxss1",
     "libgtk-3-0",
     "libxshmfence1",
     "libglu1-mesa",
-    "chromium-browser"
+    "fonts-liberation",
+    "xdg-utils"
 ]
 
 [phases.install]
 cmds = ["npm install --legacy-peer-deps"]
 
-[phases.build]
-cmds = ["echo 'Build completo'"]  # SIMPLIFICADO
+[phases.build] 
+cmds = ["echo 'Build completo'"]
 
 [start]
 cmd = "node server.js"
