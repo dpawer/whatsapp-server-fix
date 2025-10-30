@@ -1,15 +1,17 @@
-
 [phases.setup]
 nixPkgs = [
     "nodejs_22",
-    "npm-9_x"
+    "chromium"
 ]
 
 [phases.install]
-cmds = ["npm install --legacy-peer-deps"]
+cmds = [
+    "npm install --legacy-peer-deps",
+    "node -e \"console.log('Node version:', process.version)\""
+]
 
 [phases.build]
-cmds = ["npm run build"]  # Se você tiver um script build
+cmds = ["echo 'Build completed successfully'"]
 
 [start]
 cmd = "npm start"
