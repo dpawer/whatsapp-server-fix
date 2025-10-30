@@ -6,7 +6,7 @@ pkgs = [
     "chromium-browser",
     "libnss3",
     "libatk1.0-0",
-    "libatk-bridge2.0-0",
+    "libatk-bridge2.0-0", 
     "libcups2",
     "libgbm1",
     "libasound2t64",
@@ -17,10 +17,11 @@ pkgs = [
     "libglu1-mesa"
 ]
 
+# ⚠️ FORÇAR INSTALAÇÃO SEM --production
 [phases.install]
-cmds = ["npm install"]  # ⚡ REMOVIDO --omit=dev --silent
+cmds = ["npm config set production false && npm install --loglevel=error"]
 
-[phases.build]
+[phases.build] 
 cmds = ["echo 'Build completo'"]
 
 [start]
