@@ -1,42 +1,16 @@
 {
   "name": "servidor-app",
   "version": "1.0.0",
-  "description": "Servidor Node.js com Express para Railway",
   "type": "module",
-  "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "echo '✅ Build completo'",
-    "dev": "NODE_ENV=development node server.js",
-    "install-deps": "npm install --omit=dev --silent",
-    "test": "echo '✅ Testes passaram'",
-    "lint": "echo '✅ Linting completo'",
-    "health": "curl http://localhost:8080/health || echo 'Servidor não está rodando'"
+    "build": "echo 'Build completo'",
+    "dev": "NODE_ENV=development node server.js"
   },
-  "keywords": [
-    "nodejs",
-    "express",
-    "server",
-    "railway",
-    "chromium"
-  ],
-  "author": "Seu Nome",
-  "license": "MIT",
   "dependencies": {
-    "express": "^4.18.0",
-    "puppeteer-core": "^21.0.0"
+    "express": "^4.18.0"
   },
-  "devDependencies": {},
   "engines": {
-    "node": ">=22.0.0",
-    "npm": ">=9.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "seu-repositorio.git"
-  },
-  "bugs": {
-    "url": "seu-repositorio/issues"
-  },
-  "homepage": "https://seu-app.railway.app"
+    "node": ">=22.0.0"
+  }
 }
