@@ -6,7 +6,7 @@ pkgs = [
     "chromium-browser",
     "libnss3",
     "libatk1.0-0",
-    "libatk-bridge2.0-0", 
+    "libatk-bridge2.0-0",
     "libcups2",
     "libgbm1",
     "libasound2t64",
@@ -18,10 +18,10 @@ pkgs = [
 ]
 
 [phases.install]
-cmds = ["npm install --omit=dev"]  # Já está correto!
+cmds = ["npm install"]  # ⚡ REMOVIDO --omit=dev --silent
 
 [phases.build]
-cmds = ["echo '✅ Build completo'"]
+cmds = ["echo 'Build completo'"]
 
 [start]
 cmd = "npm start"
