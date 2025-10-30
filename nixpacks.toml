@@ -1,7 +1,7 @@
 [phases.setup]
 nixPkgs = [
     "nodejs_22",
-    "chromium",
+    "chromium", 
     "nss",
     "atk",
     "at-spi2-atk",
@@ -12,26 +12,25 @@ nixPkgs = [
     "pango",
     "libxscrnsaver",
     "gtk3",
-    "libglvnd",
-    "glu"
+    "libglvnd"
+    # REMOVIDO: "glu" - não existe no Nix
 ]
 
 [phases.setup.apt]
 pkgs = [
     "libnss3",
     "libatk1.0-0",
-    "libatk-bridge2.0-0", 
-    "libcups2",
+    "libatk-bridge2.0-0",
+    "libcups2", 
     "libgbm1",
     "libasound2t64",
     "libpangocairo-1.0-0",
     "libxss1",
     "libgtk-3-0",
     "libxshmfence1",
-    "libglu1-mesa",
-    "chromium",
-    "chromium-common",
-    "chromium-driver"
+    "libglu1-mesa",  # CORRIGIDO: nome correto no Ubuntu
+    "chromium-browser",
+    "chromium-chromedriver"
 ]
 
 [phases.install]
