@@ -9,8 +9,15 @@ const PORT = process.env.PORT || 3000;
 // ================= CONFIGURAÇÃO SUPABASE =================
 console.log('🔍 Verificando variáveis de ambiente...');
 
-const supabaseUrl = process.env.SUPABASE_URL;
+// CORREÇÃO: Usar os nomes corretos das variáveis do Railway
+const supabaseUrl = process.env.URL_SUPABASE; // Corrigido para URL_SUPABASE
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+console.log('📋 Variáveis de ambiente:', {
+  hasSupabaseUrl: !!supabaseUrl,
+  hasSupabaseKey: !!supabaseKey,
+  nodeEnv: process.env.NODE_ENV
+});
 
 let supabase = null;
 let supabaseConnected = false;
@@ -35,7 +42,7 @@ let currentQrCode = '';
 let qrGenerated = false;
 
 async function getBrowserConfig() {
-  // Configuração para Railway (sem Chromium embutido)
+  // Configuração otimizada para Railway
   return {
     headless: true,
     args: [
@@ -49,9 +56,11 @@ async function getBrowserConfig() {
       '--single-process',
       '--disable-web-security',
       '--disable-features=VizDisplayCompositor',
-      '--window-size=1920,1080'
+      '--window-size=1920,1080',
+      '--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ],
-    executablePath: process.env.CHROME_PATH || null
+    // CORREÇÃO: Usar chromium do NixPacks
+    executablePath: process.env.CHROME_PATH || '/usr/bin/chromium'
   };
 }
 
@@ -60,6 +69,7 @@ async function initializeWhatsApp() {
   
   try {
     const browserConfig = await getBrowserConfig();
+    console.log('🔧 Configuração do navegador:', browserConfig.executablePath);
     
     whatsappClient = new Client({
       authStrategy: new LocalAuth({
@@ -151,7 +161,7 @@ async function initializeWhatsApp() {
     console.log('✅ Cliente WhatsApp inicializado');
     
   } catch (error) {
-    console.error('❌ Erro crítico ao inicializar WhatsApp:', error.message);
+    console.error('❌ Erro crítico ao inicializar WhatsApp:', error);
     console.log('🔄 Tentando novamente em 30 segundos...');
     
     // Tentar novamente com delay maior
@@ -167,7 +177,7 @@ app.use(express.json());
 
 // ================= ROTAS =================
 
-// Health Check
+// Health Check melhorado
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK',
@@ -177,7 +187,8 @@ app.get('/health', (req, res) => {
     has_qr: !!currentQrCode,
     timestamp: new Date().toISOString(),
     server: 'Railway Cloud',
-    node_version: process.version
+    node_version: process.version,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -282,7 +293,7 @@ app.get('/', (req, res) => {
     status: 'running',
     whatsapp: isConnected ? 'connected' : (currentQrCode ? 'waiting_qr' : 'disconnected'),
     supabase: supabaseConnected ? 'connected' : 'not_configured',
-    environment: 'railway',
+    environment: process.env.NODE_ENV || 'development',
     endpoints: {
       health: '/health',
       status: '/api/status',
@@ -298,7 +309,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('=====================================');
   console.log('🚀 WHATSAPP SERVER - RAILWAY EDITION');
   console.log('📍 Porta:', PORT);
-  console.log('☁️  Ambiente: Railway');
+  console.log('☁️  Ambiente:', process.env.NODE_ENV || 'development');
   console.log('🔧 Node.js:', process.version);
   console.log('💾 Supabase:', supabaseConnected ? '✅ Conectado' : '❌ Não configurado');
   console.log('=====================================');
