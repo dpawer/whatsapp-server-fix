@@ -18,7 +18,7 @@ pkgs = [
 ]
 
 [phases.install]
-cmds = ["npm install --omit=dev"]  # CORREÇÃO: --omit=dev em vez de --production
+cmds = ["npm install --omit=dev"]  # Já está correto!
 
 [phases.build]
 cmds = ["echo '✅ Build completo'"]
