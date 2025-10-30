@@ -5,18 +5,21 @@ pkgs.buildEnv {
   paths = with pkgs; [
     nodejs_22
     chromium
+    
+    # Dependências do Chromium (nomes CORRETOS)
     nss
     atk
-    at-spi2-atk
+    at-spi2-core      # CORREÇÃO: nome correto
     cups
     libdrm
     mesa
     alsa-lib
     pango
-    libxscrnsaver
     gtk3
     libglvnd
-    # REMOVIDO: glu - não existe
+    xorg.libXScrnSaver  # CORREÇÃO: nome correto
+    
+    # Dependências X11 adicionais
     xorg.libX11
     xorg.libxcb
     xorg.libXcomposite
@@ -28,7 +31,10 @@ pkgs.buildEnv {
     xorg.libXrender
     xorg.libXtst
     xorg.libXxf86vm
+    
+    # Outras dependências
     libva
     libvdpau
+    dbus
   ];
 }
